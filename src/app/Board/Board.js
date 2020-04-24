@@ -29,7 +29,7 @@ var Board = {
 		$('body').append(this.fragment);
 		this.level = 1;
 		this.grid = {
-			dimensions: [2, 2]
+			dimensions: [6, 6]
 		};
 		this.image = new Image();
 		this.image.onload = function() {
@@ -79,7 +79,7 @@ var Board = {
 					break;
 			}
 		});
-		this.initSounds();
+		// this.initSounds();
 	},
 	randomizeTiles: function() {
 		var randomizableTiles = this.tiles.slice(0, this.tiles.length - 1),
@@ -109,7 +109,8 @@ var Board = {
 		this.caliberate();
 	},
 	hint: function() {
-		this.config.sound.hint.play();
+		// this.autoPlay();
+		// this.config.sound.hint.play();
 		var tileDimensions = this.getTileDimensions();
 		this.tiles.forEach(function(tile, index) {
 			tile.moveTo({
@@ -185,6 +186,71 @@ var Board = {
 		var boardDimensions = this.getBoardDimensions();
 		return boardDimensions.width / boardDimensions.height;
 	},
+	autoPlay: function() {
+		this.bulkMove(this.rotate("UP") , 2);
+	},
+	bulkMove: function(moves, times = 1) {
+		const controlKeys = {
+			MOVE_UP: () => {Board.moveTile([Board.grid.emptySlot[0], Board.grid.emptySlot[1] + 1]);},
+			MOVE_RIGHT: () => {Board.moveTile([Board.grid.emptySlot[0] - 1, Board.grid.emptySlot[1]]);},
+			MOVE_DOWN: () => {Board.moveTile([Board.grid.emptySlot[0], Board.grid.emptySlot[1] - 1]);},
+			MOVE_LEFT: () => {Board.moveTile([Board.grid.emptySlot[0] + 1, Board.grid.emptySlot[1]]);}
+		};
+		function sleep(milliseconds, direction, callback) {
+			const date = Date.now();
+			let currentDate = null;
+			do {
+			  currentDate = Date.now();
+			} while (currentDate - date < milliseconds);
+			callback(direction);
+		}
+		while(times) {
+			for(i=0; i < moves.length; i++) {
+				sleep(800, i, d => {
+					console.log(d);
+					controlKeys[moves[d]]();
+				});
+				// controlKeys[moves[i]]();
+			}
+			// moves.forEach(direction => {
+			// 	sleep(250).then(() => {
+			// 		controlKeys[direction]();
+			// 	});
+			// });
+			times -=1;
+		}
+	},
+	rotate: function(direction, clockwise = true, fullRotation = true){
+		// if(!fullRotation) {
+		// 	if(clockwise) {
+
+		// 	}
+		// }
+		let rotation;
+		switch (direction) {
+			case 'UP':
+				rotation = ["MOVE_RIGHT", "MOVE_DOWN", "MOVE_DOWN", "MOVE_LEFT", "MOVE_UP"];
+				clockwise || (rotation = ["MOVE_LEFT", "MOVE_DOWN", "MOVE_DOWN", "MOVE_RIGHT", "MOVE_UP"]);
+				break;
+			case 'RIGHT':
+				rotation = ["MOVE_DOWN", "MOVE_LEFT", "MOVE_LEFT", "MOVE_UP", "MOVE_RIGHT"];
+				clockwise || (rotation = ["MOVE_UP", "MOVE_LEFT", "MOVE_LEFT", "MOVE_DOWN", "MOVE_RIGHT"]);
+				break;
+			case 'DOWN':
+				rotation = ["MOVE_LEFT", "MOVE_UP", "MOVE_UP", "MOVE_RIGHT", "MOVE_DOWN"];
+				clockwise || (rotation = ["MOVE_RIGHT", "MOVE_UP", "MOVE_UP", "MOVE_LEFT", "MOVE_DOWN"]);
+				break;
+			case 'LEFT':
+				rotation = ["MOVE_UP", "MOVE_RIGHT", "MOVE_RIGHT", "MOVE_DOWN", "MOVE_LEFT"];
+				clockwise || (rotation = ["MOVE_DOWN", "MOVE_RIGHT", "MOVE_RIGHT", "MOVE_UP", "MOVE_LEFT"]);
+				break;
+		}
+		// fullRotation || (function(){
+		// 	rotation[2] = rotation[3];
+		// 	rotation.pop().pop();
+		// })();
+		return rotation;
+	},
 	moveTile: function(tile) {
 		var tileSlot = (tile instanceof Tile) ? tile.slot : tile;
 		if (Math.abs(tileSlot[0] - this.grid.emptySlot[0]) + Math.abs(tileSlot[1] - this.grid.emptySlot[1]) === 1) {
@@ -193,7 +259,7 @@ var Board = {
 			})[0];
 			!tile || this.moveTileToEmptySlot(tile);
 		} else {
-			this.config.sound.wrongMove.play();
+			// this.config.sound.wrongMove.play();
 		}
 	},
 	moveTileToEmptySlot: function(tile, callback) {
@@ -203,7 +269,7 @@ var Board = {
 		var emptySlotTile = this.tiles[this.tiles.length - 1];
 		emptySlotTile.slot = this.grid.emptySlot;
 		tile.slot = emptySlot;
-		this.config.sound.move.play();
+		// this.config.sound.move.play();
 		tile.moveTo({
 			"left": tile.slot[0] * tileDimensions.width,
 			"top": tile.slot[1] * tileDimensions.height,
@@ -246,7 +312,7 @@ var Board = {
 		this.levelCompleted = true;
 		this.fragment.addClass('complete');
 		this.pauseBackGroundSound();
-		this.config.sound.win.play();
+		// this.config.sound.win.play();
 		this.overlayMessage("You win!", function() {
 			delete Board.levelCompleted;
 			Board.fragment.removeClass('complete');
@@ -254,72 +320,72 @@ var Board = {
 		});
 		this.playBackGroundSound();
 	},
-	initSounds: function(){
-		const board = this;
-		$(document).ready(function(){
-			board.backGroundSounds();
-			board.boardMovesSounds();
-			board.config.sound.win = new Howl({
-				src: ["/sounds/win.wav"],
-				volume: 0.1
-			});
-		});
-	},
-	backGroundSounds: function() {
-		this.config.sound.backgroundSound1 = new Howl({
-			src: ["/sounds/flowing-canal.wav"],
-			autoplay: true,
-			loop: true,
-			volume: 0.1
-		});
-		this.config.sound.backgroundSound2 = new Howl({
-			src: ['/sounds/backgroundSound.mp3'],
-			autoplay: true,
-			loop: true,
-			volume: 0.2
-		});
-		this.frogSounds(new Howl({
-			src: [this.config.sound.paths.cuteFrogMidLength],
-			volume: 0.1
-		}), "cuteFrogMidLength");
-		this.frogSounds(new Howl({
-			src: [this.config.sound.paths.beautifulFrogsLong],
-			volume: 0.1
-		}), "beautifulFrogsLong");
-	},
-	frogSounds: function(sound, name) {
-		const board = this;
-		let delay = Math.ceil(Math.random() * 120000);
-		setTimeout(function() {
-			sound.stop();
-			sound.play();
-			board.frogSounds(sound, name);
-		}, delay)
-	},
-	boardMovesSounds: function() {
-		this.config.sound.move = new Howl({
-			src: ["/sounds/move.wav"],
-			volume: 0.9
-		});
-		this.config.sound.wrongMove = new Howl({
-			src: ["/sounds/wrong-move.mp3"],
-			volume: 0.7
-		});
-		this.config.sound.hint = new Howl({
-			src: ["/sounds/hint.wav"],
-			volume: 0.7
-		});
-		this.config.sound.win = new Howl({
-			src: ["/sounds/win.wav"],
-			volume: 0.1
-		});
-	},
-	pauseBackGroundSound: function() {
-		this.config.sound.backgroundSound1.stop();
-		this.config.sound.backgroundSound2.stop();
-	},
-	playBackGroundSound: function() {
-		this.config.sound.backgroundSound1.play();
-		this.config.sound.backgroundSound2.play();
-	}
+	// initSounds: function(){
+	// 	const board = this;
+	// 	$(document).ready(function(){
+	// 		board.backGroundSounds();
+	// 		board.boardMovesSounds();
+	// 		board.config.sound.win = new Howl({
+	// 			src: ["/sounds/win.wav"],
+	// 			volume: 0.1
+	// 		});
+	// 	});
+	// },
+	// backGroundSounds: function() {
+	// 	this.config.sound.backgroundSound1 = new Howl({
+	// 		src: ["/sounds/flowing-canal.wav"],
+	// 		autoplay: true,
+	// 		loop: true,
+	// 		volume: 0.1
+	// 	});
+	// 	this.config.sound.backgroundSound2 = new Howl({
+	// 		src: ['/sounds/backgroundSound.mp3'],
+	// 		autoplay: true,
+	// 		loop: true,
+	// 		volume: 0.2
+	// 	});
+	// 	this.frogSounds(new Howl({
+	// 		src: [this.config.sound.paths.cuteFrogMidLength],
+	// 		volume: 0.1
+	// 	}), "cuteFrogMidLength");
+	// 	this.frogSounds(new Howl({
+	// 		src: [this.config.sound.paths.beautifulFrogsLong],
+	// 		volume: 0.1
+	// 	}), "beautifulFrogsLong");
+	// },
+	// frogSounds: function(sound, name) {
+	// 	const board = this;
+	// 	let delay = Math.ceil(Math.random() * 120000);
+	// 	setTimeout(function() {
+	// 		sound.stop();
+	// 		sound.play();
+	// 		board.frogSounds(sound, name);
+	// 	}, delay)
+	// },
+	// boardMovesSounds: function() {
+	// 	this.config.sound.move = new Howl({
+	// 		src: ["/sounds/move.wav"],
+	// 		volume: 0.9
+	// 	});
+	// 	this.config.sound.wrongMove = new Howl({
+	// 		src: ["/sounds/wrong-move.mp3"],
+	// 		volume: 0.7
+	// 	});
+	// 	this.config.sound.hint = new Howl({
+	// 		src: ["/sounds/hint.wav"],
+	// 		volume: 0.7
+	// 	});
+	// 	this.config.sound.win = new Howl({
+	// 		src: ["/sounds/win.wav"],
+	// 		volume: 0.1
+	// 	});
+	// },
+	// pauseBackGroundSound: function() {
+	// 	this.config.sound.backgroundSound1.stop();
+	// 	this.config.sound.backgroundSound2.stop();
+	// },
+	// playBackGroundSound: function() {
+	// 	this.config.sound.backgroundSound1.play();
+	// 	this.config.sound.backgroundSound2.play();
+	// }
 };
