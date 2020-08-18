@@ -29,6 +29,12 @@ Tile.prototype = {
 	constructor: Tile,
 	moveTo: function(coordinates) {
 		this.fragment.css(coordinates)
+		// const { spawn } = require('child_process');
+		// const child = spawn('pwd');
+		// // process.stdin.pipe(child.stdin)
+		// child.stdout.on('data', (data) => {
+		// 	console.log(`child stdout:\n${data}`);
+		// });
 	},
 	caliberate: function(config) {
 		this.moveTo({

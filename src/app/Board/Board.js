@@ -109,7 +109,6 @@ var Board = {
 		this.caliberate();
 	},
 	hint: function() {
-		// this.autoPlay();
 		// this.config.sound.hint.play();
 		var tileDimensions = this.getTileDimensions();
 		this.tiles.forEach(function(tile, index) {
@@ -186,8 +185,8 @@ var Board = {
 		var boardDimensions = this.getBoardDimensions();
 		return boardDimensions.width / boardDimensions.height;
 	},
-	autoPlay: function() {
-		this.bulkMove(this.rotate("UP") , 2);
+	autoPlay: function(direction) {
+		this.bulkMove(this.rotate(direction) , 1);
 	},
 	bulkMove: function(moves, times = 1) {
 		const controlKeys = {
@@ -196,27 +195,11 @@ var Board = {
 			MOVE_DOWN: () => {Board.moveTile([Board.grid.emptySlot[0], Board.grid.emptySlot[1] - 1]);},
 			MOVE_LEFT: () => {Board.moveTile([Board.grid.emptySlot[0] + 1, Board.grid.emptySlot[1]]);}
 		};
-		function sleep(milliseconds, direction, callback) {
-			const date = Date.now();
-			let currentDate = null;
-			do {
-			  currentDate = Date.now();
-			} while (currentDate - date < milliseconds);
-			callback(direction);
-		}
+		const waitingTime = 800;
 		while(times) {
 			for(i=0; i < moves.length; i++) {
-				sleep(800, i, d => {
-					console.log(d);
-					controlKeys[moves[d]]();
-				});
-				// controlKeys[moves[i]]();
+				setTimeout(controlKeys[moves[i]], i*waitingTime);
 			}
-			// moves.forEach(direction => {
-			// 	sleep(250).then(() => {
-			// 		controlKeys[direction]();
-			// 	});
-			// });
 			times -=1;
 		}
 	},
